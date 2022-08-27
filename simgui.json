@@ -1,0 +1,25 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/LiveWindow/SwerveDrive": "Subsystem",
+      "/LiveWindow/SwerveModule": "Subsystem",
+      "/LiveWindow/Ungrouped/PIDController[1]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[3]": "PIDController",
+      "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
+      "/LiveWindow/climberSub": "Subsystem",
+      "/LiveWindow/intakeSub": "Subsystem",
+      "/LiveWindow/shooterSub": "Subsystem",
+      "/SmartDashboard/Auto Selector": "String Chooser",
+      "/SmartDashboard/Field2d": "Field2d"
+    },
+    "windows": {
+      "/SmartDashboard/Field2d": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  }
+}
