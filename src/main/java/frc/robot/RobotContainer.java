@@ -5,6 +5,7 @@
 package frc.robot;
 
 
+import com.revrobotics.REVPhysicsSim;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.util.net.PortForwarder;
@@ -152,7 +153,9 @@ public class RobotContainer {
 
   public void simulationInit() {}
 
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    REVPhysicsSim.getInstance().run();
+  }
 
 
 public static shooterSub mShooterSub = new shooterSub();

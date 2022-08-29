@@ -10,6 +10,8 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.Pigeon2;
 import com.ctre.phoenix.unmanaged.Unmanaged;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -17,6 +19,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -33,42 +36,39 @@ public class SwerveDrive extends SubsystemBase {
               ModulePosition.FRONT_LEFT,
                   new SwerveModule(
                       0,
-                      new TalonFX(CAN.frontLeftTurnMotor),
-                      new TalonFX(CAN.frontLeftDriveMotor),
+                      new CANSparkMax(CAN.frontLeftTurnMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
+                      new CANSparkMax(CAN.frontLeftDriveMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
                       new CANCoder(CAN.frontLeftCanCoder),
                       0),
               ModulePosition.FRONT_RIGHT,
                   new SwerveModule(
                       1,
-                      new TalonFX(CAN.frontRightTurnMotor),
-                      new TalonFX(CAN.frontRightDriveMotor),
+                      new CANSparkMax(CAN.frontRightTurnMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
+                      new CANSparkMax(CAN.frontRightDriveMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
                       new CANCoder(CAN.frontRightCanCoder),
                       0),
               ModulePosition.BACK_LEFT,
                   new SwerveModule(
                       2,
-                      new TalonFX(CAN.backLeftTurnMotor),
-                      new TalonFX(CAN.backLeftDriveMotor),
+                      new CANSparkMax(CAN.backLeftTurnMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
+                      new CANSparkMax(CAN.backLeftDriveMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
                       new CANCoder(CAN.backLeftCanCoder),
                       0),
               ModulePosition.BACK_RIGHT,
                   new SwerveModule(
                       3,
-                      new TalonFX(CAN.backRightTurnMotor),
-                      new TalonFX(CAN.backRightDriveMotor),
+                      new CANSparkMax(CAN.backRightTurnMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
+                      new CANSparkMax(CAN.backRightDriveMotor, CANSparkMaxLowLevel.MotorType.kBrushless),
                       new CANCoder(CAN.backRightCanCoder),
                       0)));
 
   private Pigeon2 m_pigeon = new Pigeon2(CAN.pigeon);
 
-  private SwerveDrivePoseEstimator m_odometry =
-      new SwerveDrivePoseEstimator(
-          getHeadingRotation2d(),
-          new Pose2d(),
-          kSwerveKinematics,
-          VecBuilder.fill(0.1, 0.1, 0.1),
-          VecBuilder.fill(0.05),
-          VecBuilder.fill(0.1, 0.1, 0.1));
+  private SwerveDriveOdometry m_odometry =
+          new SwerveDriveOdometry(
+            kSwerveKinematics,
+            getHeadingRotation2d(),
+            new Pose2d());
 
   private ProfiledPIDController m_xController =
       new ProfiledPIDController(kP_X, 0, kD_X, kThetaControllerConstraints);
@@ -121,7 +121,7 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   public Pose2d getPoseMeters() {
-    return m_odometry.getEstimatedPosition();
+    return m_odometry.getPoseMeters();
   }
 
   public SwerveModule getSwerveModule(int moduleNumber) {

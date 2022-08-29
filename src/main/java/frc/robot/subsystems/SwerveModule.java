@@ -8,15 +8,14 @@ import static frc.robot.Constants.SwerveDrive.kMaxSpeedMetersPerSecond;
 import static frc.robot.Constants.SwerveModule.*;
 import static frc.robot.Constants.SwerveModule.kDriveMotorGearRatio;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.DemandType;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.unmanaged.Unmanaged;
+import com.revrobotics.*;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
@@ -26,8 +25,8 @@ import frc.robot.utils.*;
 
 public class SwerveModule extends SubsystemBase {
   int m_moduleNumber;
-  TalonFX m_turnMotor;
-  TalonFX m_driveMotor;
+  CANSparkMax m_turnMotor;
+  CANSparkMax m_driveMotor;
   CANCoder m_angleEncoder;
   double m_angleOffset;
   double m_lastAngle;
@@ -56,8 +55,8 @@ public class SwerveModule extends SubsystemBase {
 
   public SwerveModule(
       int moduleNumber,
-      TalonFX turnMotor,
-      TalonFX driveMotor,
+      CANSparkMax turnMotor,
+      CANSparkMax driveMotor,
       CANCoder angleEncoder,
       double angleOffset) {
     m_moduleNumber = moduleNumber;
@@ -66,15 +65,17 @@ public class SwerveModule extends SubsystemBase {
     m_angleEncoder = angleEncoder;
     m_angleOffset = angleOffset;
 
-    m_driveMotor.configFactoryDefault();
-    m_driveMotor.configAllSettings(CtreUtils.generateDriveMotorConfig());
+    m_driveMotor.restoreFactoryDefaults();
+    RevUtils.setDriveMotorConfig(m_driveMotor);
 
-    m_turnMotor.configFactoryDefault();
-    m_turnMotor.configAllSettings(CtreUtils.generateTurnMotorConfig());
+    m_turnMotor.restoreFactoryDefaults();
+    RevUtils.setTurnMotorConfig(m_turnMotor);
 
     m_angleEncoder.configFactoryDefault();
     m_angleEncoder.configAllSettings(CtreUtils.generateCanCoderConfig());
-    m_angleEncoder.configMagnetOffset(m_angleOffset);
+
+    REVPhysicsSim.getInstance().addSparkMax(m_driveMotor, DCMotor.getNEO(1));
+//    REVPhysicsSim.getInstance().addSparkMax(m_turnMotor, DCMotor.getNEO(1));
 
     resetAngleToAbsolute();
   }
@@ -84,12 +85,12 @@ public class SwerveModule extends SubsystemBase {
   }
 
   public void resetAngleToAbsolute() {
-    m_turnMotor.setSelectedSensorPosition(
-        m_angleEncoder.getAbsolutePosition() / kTurningEncoderDistancePerPulse);
+    double angle = m_angleEncoder.getAbsolutePosition() - m_angleOffset;
+    m_turnMotor.getEncoder().setPosition(angle / kTurnRotationsToDegrees);
   }
 
   public double getHeadingDegrees() {
-    return m_turnMotor.getSelectedSensorPosition() * kTurningMotorDistancePerPulse;
+    return m_turnMotor.getEncoder().getPosition() * kTurnRotationsToDegrees;
   }
 
   public Rotation2d getHeadingRotation2d() {
@@ -97,7 +98,7 @@ public class SwerveModule extends SubsystemBase {
   }
 
   public double getVelocityMetersPerSecond() {
-    return m_driveMotor.getSelectedSensorVelocity() * kDriveMotorDistancePerPulse * 10;
+    return m_driveMotor.getEncoder().getVelocity() * kDriveRpmToMetersPerSecond;
   }
 
   public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
@@ -105,27 +106,32 @@ public class SwerveModule extends SubsystemBase {
 
     if (isOpenLoop) {
       double percentOutput = desiredState.speedMetersPerSecond / kMaxSpeedMetersPerSecond;
-      m_driveMotor.set(ControlMode.PercentOutput, percentOutput);
+      m_driveMotor.set(percentOutput);
     } else {
-      double velocity = desiredState.speedMetersPerSecond / (kDriveMotorDistancePerPulse * 10);
-      m_driveMotor.set(
-          ControlMode.Velocity,
+      double velocity = desiredState.speedMetersPerSecond / kDriveRpmToMetersPerSecond;
+      m_driveMotor.getPIDController().setReference(
           velocity,
-          DemandType.ArbitraryFeedForward,
-          feedforward.calculate(desiredState.speedMetersPerSecond));
+          CANSparkMax.ControlType.kVelocity,
+          0,
+          feedforward.calculate(desiredState.speedMetersPerSecond),
+          SparkMaxPIDController.ArbFFUnits.kPercentOut
+          );
     }
 
     double angle =
         (Math.abs(desiredState.speedMetersPerSecond) <= (kMaxSpeedMetersPerSecond * 0.01))
             ? m_lastAngle
             : desiredState.angle
-                .getDegrees(); // Prevent rotating module if speed is less then 1%. Prevents
+                .getDegrees(); // Prevent rotating module if speed is less than 1%. Prevents
     // Jittering.
-    m_turnMotor.set(ControlMode.Position, angle / kTurningMotorDistancePerPulse);
+    m_turnMotor.getPIDController().setReference(angle / kTurnRotationsToDegrees,
+            CANSparkMax.ControlType.kPosition, 0);
     m_lastAngle = angle;
 
-    m_drivePercentOutput = m_driveMotor.getMotorOutputPercent();
-    m_turnPercentOutput = m_turnMotor.getMotorOutputPercent();
+//    System.out.printf("Turn %d Setpoint %.2f\n", m_moduleNumber, angle / kTurnRotationsToDegrees);
+    System.out.printf("Turn %d Output %.2f\n", m_moduleNumber, m_turnMotor.get());
+//    m_drivePercentOutput = m_driveMotor.get();
+    m_turnPercentOutput = m_turnMotor.getPIDController().;
   }
 
   public SwerveModuleState getState() {
@@ -148,35 +154,25 @@ public class SwerveModule extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     m_turnMotorSim.setInputVoltage(m_turnPercentOutput * RobotController.getBatteryVoltage());
-    m_driveMotorSim.setInputVoltage(m_drivePercentOutput * RobotController.getBatteryVoltage());
+//    m_driveMotorSim.setInputVoltage(m_drivePercentOutput * RobotController.getBatteryVoltage());
 
     m_turnMotorSim.update(0.02);
-    m_driveMotorSim.update(0.02);
+//    m_driveMotorSim.update(0.02);
 
     Unmanaged.feedEnable(20);
 
-    m_turnMotorSimDistance += m_turnMotorSim.getAngularVelocityRadPerSec() * 0.02;
-    m_driveMotorSimDistance += m_driveMotorSim.getAngularVelocityRadPerSec() * 0.02;
-
-    m_turnMotor
-        .getSimCollection()
-        .setIntegratedSensorRawPosition(
-            (int) (m_turnMotorSimDistance / kTurningMotorDistancePerPulse));
-    m_turnMotor
-        .getSimCollection()
-        .setIntegratedSensorVelocity(
-            (int)
-                (m_turnMotorSim.getAngularVelocityRadPerSec()
-                    / (kTurningMotorDistancePerPulse * 10)));
-    m_driveMotor
-        .getSimCollection()
-        .setIntegratedSensorRawPosition(
-            (int) (m_driveMotorSimDistance / kDriveMotorDistancePerPulse));
-    m_driveMotor
-        .getSimCollection()
-        .setIntegratedSensorVelocity(
-            (int)
-                (m_driveMotorSim.getAngularVelocityRadPerSec()
-                    / (kDriveMotorDistancePerPulse * 10)));
+    m_turnMotorSimDistance = m_turnMotor.getEncoder().getPosition() + (m_turnMotorSim.getAngularVelocityRadPerSec() * 0.02 * 2 * Math.PI);
+//    m_driveMotorSimDistance += m_driveMotorSim.getAngularVelocityRadPerSec() * 0.02;
+    m_turnMotor.getEncoder().setPosition(m_turnMotorSimDistance);
+//    m_driveMotor
+//        .getSimCollection()
+//        .setIntegratedSensorRawPosition(
+//            (int) (m_driveMotorSimDistance / kDriveMotorDistancePerPulse));
+//    m_driveMotor
+//        .getSimCollection()
+//        .setIntegratedSensorVelocity(
+//            (int)
+//                (m_driveMotorSim.getAngularVelocityRadPerSec()
+//                    / (kDriveMotorDistancePerPulse * 10)));
   }
 }

@@ -70,7 +70,7 @@ public final class Constants {
           public static final SwerveDriveKinematics kSwerveKinematics =
         new SwerveDriveKinematics(kModuleTranslations);
 
-        public static final double kMaxSpeedMetersPerSecond = Units.feetToMeters(18);
+        public static final double kMaxSpeedMetersPerSecond = Units.feetToMeters(16);
         public static final double kMaxRotationRadiansPerSecond = Math.PI * 1.5;
         public static final double kMaxRotationRadiansPerSecondSquared = Math.PI * 1.5;
     
@@ -97,16 +97,16 @@ public final class Constants {
     public static final double kDriveMotorGearRatio = 6.12;
     public static final double kTurningMotorGearRatio = 12.8;
     public static final double kWheelDiameterMeters = Units.inchesToMeters(3.94);
-    public static final int kFalconEncoderCPR = 2048;
+    public static final int kNeoCPR = 42;
     public static final int kCANCoderCPR = 4096; // Figure this out for Neo Motors.
 
-    public static final DCMotor kDriveGearbox = DCMotor.getFalcon500(1);
-    public static final DCMotor kTurnGearbox = DCMotor.getFalcon500(1);
+    public static final DCMotor kDriveGearbox = DCMotor.getNEO(1);
+    public static final DCMotor kTurnGearbox = DCMotor.getNEO(1);
 
-    public static final double kDriveMotorDistancePerPulse =
-        (kWheelDiameterMeters * Math.PI) / (kFalconEncoderCPR * kDriveMotorGearRatio);
-    public static final double kTurningMotorDistancePerPulse =
-        360.0 / (kFalconEncoderCPR * kTurningMotorGearRatio);
+    public static final double kDriveRpmToMetersPerSecond =
+            ((kWheelDiameterMeters * Math.PI) / kDriveMotorGearRatio) * 60.0;
+    public static final double kTurnRotationsToDegrees =
+            360.0 / kTurningMotorGearRatio;
     public static final double kTurningEncoderDistancePerPulse = 360.0 / kCANCoderCPR;
 
     public static final double ksDriveVoltSecondsPerMeter = 0.667 / 12;
