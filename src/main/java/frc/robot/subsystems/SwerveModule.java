@@ -129,9 +129,9 @@ public class SwerveModule extends SubsystemBase {
     m_lastAngle = angle;
 
 //    System.out.printf("Turn %d Setpoint %.2f\n", m_moduleNumber, angle / kTurnRotationsToDegrees);
-    System.out.printf("Turn %d Output %.2f\n", m_moduleNumber, m_turnMotor.get());
+//    System.out.printf("Turn %d Output %.2f\n", m_moduleNumber, m_turnMotor.get());
 //    m_drivePercentOutput = m_driveMotor.get();
-    m_turnPercentOutput = m_turnMotor.getPIDController().;
+//    m_turnPercentOutput = m_turnMotor.getPIDController().;
   }
 
   public SwerveModuleState getState() {
@@ -153,17 +153,17 @@ public class SwerveModule extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
-    m_turnMotorSim.setInputVoltage(m_turnPercentOutput * RobotController.getBatteryVoltage());
+//    m_turnMotorSim.setInputVoltage(m_turnPercentOutput * RobotController.getBatteryVoltage());
 //    m_driveMotorSim.setInputVoltage(m_drivePercentOutput * RobotController.getBatteryVoltage());
 
-    m_turnMotorSim.update(0.02);
+//    m_turnMotorSim.update(0.02);
 //    m_driveMotorSim.update(0.02);
 
-    Unmanaged.feedEnable(20);
+//    Unmanaged.feedEnable(20);
 
-    m_turnMotorSimDistance = m_turnMotor.getEncoder().getPosition() + (m_turnMotorSim.getAngularVelocityRadPerSec() * 0.02 * 2 * Math.PI);
+//    m_turnMotorSimDistance = m_turnMotor.getEncoder().getPosition() + (m_turnMotorSim.getAngularVelocityRadPerSec() * 0.02 * 2 * Math.PI);
 //    m_driveMotorSimDistance += m_driveMotorSim.getAngularVelocityRadPerSec() * 0.02;
-    m_turnMotor.getEncoder().setPosition(m_turnMotorSimDistance);
+//    m_turnMotor.getEncoder().setPosition(m_turnMotorSimDistance);
 //    m_driveMotor
 //        .getSimCollection()
 //        .setIntegratedSensorRawPosition(
