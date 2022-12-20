@@ -79,7 +79,9 @@ public class SwerveDrive extends SubsystemBase {
 
   private double m_simYaw;
 
-  public SwerveDrive() {}
+  public SwerveDrive() {
+    m_pigeon.setYaw(0);
+  }
 
   public void drive(
       double throttle,
@@ -167,5 +169,6 @@ public class SwerveDrive extends SubsystemBase {
 
     Unmanaged.feedEnable(20);
     m_pigeon.getSimCollection().setRawHeading(-Units.radiansToDegrees(m_simYaw));
+    System.out.println(m_pigeon.getYaw());
   }
 }

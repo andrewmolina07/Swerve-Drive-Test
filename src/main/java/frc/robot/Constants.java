@@ -103,8 +103,10 @@ public final class Constants {
     public static final DCMotor kDriveGearbox = DCMotor.getNEO(1);
     public static final DCMotor kTurnGearbox = DCMotor.getNEO(1);
 
+    public static final double kDriveRevToMeters =
+            ((kWheelDiameterMeters * Math.PI) / kDriveMotorGearRatio);
     public static final double kDriveRpmToMetersPerSecond =
-            ((kWheelDiameterMeters * Math.PI) / kDriveMotorGearRatio) * 60.0;
+            kDriveRevToMeters / 60.0;
     public static final double kTurnRotationsToDegrees =
             360.0 / kTurningMotorGearRatio;
     public static final double kTurningEncoderDistancePerPulse = 360.0 / kCANCoderCPR;
